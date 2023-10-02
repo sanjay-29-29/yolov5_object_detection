@@ -29,7 +29,7 @@ pip install -r requirements.txt
 
 4. Open the Python script `alerting_and_count.py` and make the following adjustments:
 
-   - Update the `weights_path` variable to point to the location of your custom YOLOv5 model weights.
+   - Update the `weights_path` variable to point to the location of your custom YOLOv5 model weights.(mostly a .pt file)
    - Ensure your webcam is accessible via camera index `0`, or change the index if needed.
 
 5. Save the script and run it using:
