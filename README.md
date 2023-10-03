@@ -1,6 +1,6 @@
-# YOLOv5 Object Detection on Windows
+# YOLOv5 Object Detection
 
-This repository contains a Python script for performing object detection using the YOLOv5 model on Windows. It captures video frames from a webcam and overlays bounding boxes on detected objects, counting the number of detections for a specific class and displaying an alert message if a threshold is met.
+This repository contains a Python script for performing object detection using the YOLOv5 model. It captures video frames from a webcam and overlays bounding boxes on detected objects, counting the number of detections for a specific class and displaying an alert message if a threshold is met.
 
 ## Prerequisites
 
@@ -17,6 +17,7 @@ Before running the code, ensure you have the following dependencies installed on
 ```
 git clone https://github.com/PattasuBalu/yolo_object_detection.git
 ```
+
 2. Navigate to the cloned repository folder:
 ```
 cd yolo_object_detection
