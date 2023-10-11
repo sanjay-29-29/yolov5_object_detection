@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 # Load your custom YOLOv5 model with specific weights and device
-weights_path = "D:\\yolo_object_detection\\weights\\best.pt"
+weights_path = "D:\\yolo_object_detection\\weights\\yolo_mos_recent.pt"
 device = 'cpu'  # Specify the device as 'cpu'
 model = torch.hub.load('ultralytics/yolov5', 'custom', path=weights_path, force_reload=True, device=device)
 
