@@ -4,7 +4,7 @@ This repository contains a Python script for performing object detection using t
 
 ## Prerequisites
 
-Before running the code, ensure you have the following dependencies installed on your Windows machine:
+Before running the code, ensure you have the following dependencies installed:
 
 - Python 3.x
 - OpenCV (`opencv-python`)
