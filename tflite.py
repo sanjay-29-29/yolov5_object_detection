@@ -1,69 +1,78 @@
+# Import necessary libraries
 import cv2
 import numpy as np
 import tflite_runtime.interpreter as tflite
 
-# Load your custom TFLite model
-model_path = "path/to/your/custom_model.tflite"
-
-# Load the TFLite interpreter
-interpreter = tflite.Interpreter(model_path)
-interpreter.allocate_tensors()
-
-# Get the input and output details of the model
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-
-# Confidence threshold
+# Define your model path and confidence threshold
+model_path = "weights/detect.tflite"
 confidence_threshold = 0.5
 
-# Initialize webcam
-cap = cv2.VideoCapture(0)  # Use '0' for the default camera, or specify the camera index if you have multiple cameras
+# Load the TFLite model
+interpreter = tflite.Interpreter(model_path=model_path)
+interpreter.allocate_tensors()
+
+# Get input and output details
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+height = input_details[0]['shape'][1]
+width = input_details[0]['shape'][2]
+float_input = (input_details[0]['dtype'] == np.float32)
+input_mean = 127.5
+input_std = 127.5
+
+# Open a webcam
+cap = cv2.VideoCapture(0)
 
 while True:
-    ret, frame = cap.read()  # Read a frame from the webcam
-    
+    # Capture a frame from the webcam
+    ret, frame = cap.read()
+
     if not ret:
         break
 
-    # Preprocess the frame (e.g., resizing, normalization) as needed for your custom model
-    # You may need to adjust this based on your custom model's requirements
-    
-    # Perform inference on the frame using your TFLite model
-    input_data = np.expand_dims(frame, axis=0)
+    # Resize and preprocess the frame
+    image_resized = cv2.resize(frame, (width, height))
+    input_data = np.expand_dims(image_resized, axis=0)
+
+    if float_input:
+        input_data = (np.float32(input_data) - input_mean) / input_std
+
+    # Perform object detection
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])
+    boxes = interpreter.get_tensor(output_details[1]['index'])[0]
+    scores = interpreter.get_tensor(output_details[0]['index'])[0]
 
-    # Extract bounding boxes, class labels, and confidence scores from the results
-    bboxes = output_data[0][:, :4]
-    labels = output_data[0][:, 5].astype(int)
-    confidences = output_data[0][:, 4]
+    # Initialize a count of detected objects
+    object_count = 0
 
-    # Filter detections based on confidence threshold
-    filtered_indices = np.where(confidences >= confidence_threshold)[0]
-    filtered_bboxes = bboxes[filtered_indices]
-    filtered_labels = labels[filtered_indices]
+    # Annotate the frame with "car" detections
+    for i in range(len(scores)):
+        if scores[i] > confidence_threshold:
+            ymin, xmin, ymax, xmax = boxes[i]
+            label_text = "car"
+            confidence = int(scores[i] * 100)
+            cv2.rectangle(frame, (int(xmin * frame.shape[1]), int(ymin * frame.shape[0])),
+              (int(xmax * frame.shape[1]), int(ymax * frame.shape[0])), (0, 255, 0), 2)
 
-    # Count the number of detections for your specific class or object of interest
-    # Modify this code to count detections for your desired class
-    class_of_interest = 0  # Replace with the class index of your object
-    num_detections = np.sum(filtered_labels == class_of_interest)
+            cv2.putText(frame, f"{label_text}: {confidence}%", (int(xmin * frame.shape[1]), int(ymin * frame.shape[0]) - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-    # Display the frame with bounding boxes and detection count
-    for bbox in filtered_bboxes:
-        x1, y1, x2, y2 = map(int, bbox)
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            # Increment the object count
+            object_count += 1
 
-    # Draw the alert text on the frame
-    alert_text = f'Detections: {num_detections}'
-    if num_detections >= 2:
-        alert_text += " Alert!"
-    cv2.putText(frame, alert_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    # Display an alert if more than two objects are detected
+    if object_count >= 2:
+        cv2.putText(frame, "Alert! More than 2 objects detected!", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-    cv2.imshow('Custom TFLite Object Detection', frame)
+    # Display the frame
+    cv2.imshow('Object Detection', frame)
 
+    # Break the loop when the 'q' key is pressed
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+# Release the webcam and close the OpenCV window
 cap.release()
 cv2.destroyAllWindows()
